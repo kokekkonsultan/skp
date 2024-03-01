@@ -1,0 +1,232 @@
+@extends('include_backend/template_backend')
+
+@php
+$ci = get_instance();
+@endphp
+
+@section('style')
+<link href="{{ TEMPLATE_BACKEND_PATH }}plugins/custom/datatables/datatables.bundle.css" rel="stylesheet" type="text/css" />
+
+
+<style type="text/css">
+[pointer-events="bounding-box"] {
+    display: none
+}
+</style>
+
+@endsection
+
+@section('content')
+
+<div class="container-fluid">
+    @include("include_backend/partials_no_aside/_inc_menu_repository")
+
+    <div class="row mt-5" data-aos="fade-down">
+        <div class="col-md-3">
+            @include('manage_survey/menu_data_survey')
+        </div>
+        <div class="col-md-9">
+
+
+            <!-- <button onclick="get_canvas()">Convert</button> -->
+            <!-- <div id="root"></div>
+            <br> -->
+
+            @php
+            $table_identity = $profiles->table_identity;
+            @endphp
+            @foreach ($profil_responden as $key => $row)
+            <div class="card card-custom card-sticky mb-5">
+                <div class="card-body">
+                    <!-- <h4><span class="badge badge-secondary"><?php echo $row->nama_profil_responden ?></span></h4> -->
+
+                    <div class="d-flex justify-content-center" id="<?php echo $row->nama_alias ?>"></div>
+                    <br>
+
+                    <table class="table table-bordered table-striped example" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Kelompok</th>
+                                <th>Perolehan</th>
+                                <th>Persentase</th>
+                                <th>Nilai Indeks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php
+                            $kategori_profil_responden = $ci->db->query("SELECT *,
+                            (SELECT COUNT(*) FROM survey_$table_identity WHERE is_submit = 1) AS jumlah,
+                            (SELECT COUNT(*) FROM responden_$table_identity JOIN survey_$table_identity ON responden_$table_identity.id = survey_$table_identity.id_responden WHERE kategori_profil_responden_$table_identity.id = responden_$table_identity.$row->nama_alias && is_submit = 1) AS perolehan
+
+                            FROM kategori_profil_responden_$table_identity");
+
+                            @endphp
+
+                            <?php
+                            $no = 1;
+                            $jumlah = [];
+                            $nama_kelompok = [];
+                            foreach ($kategori_profil_responden->result() as $value) {
+                                if ($value->id_profil_responden == $row->id) { ?>
+
+                            <tr>
+                                <td>{{$no++}}</td>
+                                <td>{{$value->nama_kategori_profil_responden}}</td>
+                                <td>{{$value->perolehan}}</th>
+                                <td>{{ROUND(($value->perolehan/$value->jumlah) * 100,2)}} %</td>
+                                <th>{{ROUND(
+                                    $ci->db->query("SELECT SUM(rata_rata_bobot) AS rata_rata
+                                    FROM (SELECT
+                                    nama_unsur_pelayanan,
+                                    IF(id_parent = 0, unsur_pelayanan_$table_identity.id, unsur_pelayanan_$table_identity.id_parent) AS id_sub,
+
+                                    ((SUM(skor_jawaban)/COUNT(DISTINCT survey_$table_identity.id_responden))/(COUNT(id_parent)/COUNT(DISTINCT survey_$table_identity.id_responden))) AS nilai,
+
+                                    (((SUM(skor_jawaban)/COUNT(DISTINCT survey_$table_identity.id_responden))/(COUNT(id_parent)/COUNT(DISTINCT survey_$table_identity.id_responden)))/(SELECT COUNT(id) FROM unsur_pelayanan_$table_identity WHERE id_parent = 0)) AS rata_rata_bobot
+
+
+                                    FROM jawaban_pertanyaan_unsur_$table_identity
+                                    JOIN pertanyaan_unsur_pelayanan_$table_identity ON jawaban_pertanyaan_unsur_$table_identity.id_pertanyaan_unsur = pertanyaan_unsur_pelayanan_$table_identity.id
+                                    JOIN unsur_pelayanan_$table_identity ON pertanyaan_unsur_pelayanan_$table_identity.id_unsur_pelayanan = unsur_pelayanan_$table_identity.id
+                                    JOIN survey_$table_identity ON jawaban_pertanyaan_unsur_$table_identity.id_responden = survey_$table_identity.id_responden JOIN responden_$table_identity ON responden_$table_identity.id = survey_$table_identity.id_responden
+                                    WHERE survey_$table_identity.is_submit = 1 AND responden_$table_identity.$row->nama_alias = $value->id
+                                    GROUP BY id_sub) ni")->row()->rata_rata
+                                    ,3)}}
+                                </th>
+                            </tr>
+
+                            <?php }
+                            } ?>
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+            @endforeach
+
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('javascript')
+<script src="https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.js"></script>
+
+<script src="{{ base_url() }}assets/vendor/fusioncharts-suite-xt/js/themes/fusioncharts.theme.accessibility.js">
+</script>
+<script src="{{ base_url() }}assets/vendor/fusioncharts-suite-xt/js/themes/fusioncharts.theme.candy.js"></script>
+<script src="{{ base_url() }}assets/vendor/fusioncharts-suite-xt/js/themes/fusioncharts.theme.carbon.js"></script>
+<script src="{{ base_url() }}assets/vendor/fusioncharts-suite-xt/js/themes/fusioncharts.theme.fint.js"></script>
+<script src="{{ base_url() }}assets/vendor/fusioncharts-suite-xt/js/themes/fusioncharts.theme.fusion.js"></script>
+<script src="{{ base_url() }}assets/vendor/fusioncharts-suite-xt/js/themes/fusioncharts.theme.gammel.js"></script>
+<script src="{{ base_url() }}assets/vendor/fusioncharts-suite-xt/js/themes/fusioncharts.theme.ocean.js"></script>
+<script src="{{ base_url() }}assets/vendor/fusioncharts-suite-xt/js/themes/fusioncharts.theme.umber.js"></script>
+<script src="{{ base_url() }}assets/vendor/fusioncharts-suite-xt/js/themes/fusioncharts.theme.zune.js"></script>
+
+
+<script src="{{ TEMPLATE_BACKEND_PATH }}plugins/custom/datatables/datatables.bundle.js"></script>
+
+
+
+<script>
+$(document).ready(function() {
+    $('.example').DataTable();
+});
+</script>
+
+
+
+
+
+
+
+@foreach ($profil_responden as $get)
+@php
+if($get->jumlah_pilihan >= 10){
+$type_chart = 'bar3d';
+} else {
+$type_chart = 'pie3d';
+}
+@endphp
+
+@php
+$kategori_profil_responden = $ci->db->query("SELECT *, (SELECT COUNT(*) FROM responden_$table_identity JOIN
+survey_$table_identity ON responden_$table_identity.id = survey_$table_identity.id_responden WHERE
+kategori_profil_responden_$table_identity.id = responden_$table_identity.$get->nama_alias && is_submit = 1) AS
+perolehan,
+ROUND((((SELECT COUNT(*) FROM responden_$table_identity JOIN survey_$table_identity ON responden_$table_identity.id =
+survey_$table_identity.id_responden WHERE kategori_profil_responden_$table_identity.id =
+responden_$table_identity.$get->nama_alias && is_submit = 1) / (SELECT COUNT(*) FROM survey_$table_identity WHERE
+is_submit = 1)) * 100), 2) AS persentase
+
+FROM kategori_profil_responden_$table_identity")
+@endphp
+
+<script>
+FusionCharts.ready(function() {
+    var myChart = new FusionCharts({
+        "type": "<?php echo $type_chart ?>",
+        "renderAt": "<?php echo $get->nama_alias ?>",
+        "width": "100%",
+        "height": "350",
+        "dataFormat": "json",
+        dataSource: {
+            "chart": {
+                caption: "<?php echo $get->nama_profil_responden ?>",
+                subcaption: "Chart Profil Responden Survei",
+                "enableSmartLabels": "1",
+                "startingAngle": "0",
+                "showPercentValues": "1",
+                "decimals": "2",
+                "useDataPlotColorForLabels": "1",
+                // "theme": "umber",
+                // "bgColor": "#ffffff",
+
+                theme: "fusion"
+            },
+            "data": [
+
+                <?php foreach ($kategori_profil_responden->result() as $kpr) {
+                        if ($kpr->id_profil_responden == $get->id) { ?> {
+                    "label": <?php echo str_word_count($kpr->nama_kategori_profil_responden) > 3 ? '"' . substr($kpr->nama_kategori_profil_responden, 0, 7) . ' [...] (' . $kpr->perolehan . ')"' : '"' . $kpr->nama_kategori_profil_responden . ' (' . $kpr->perolehan . ')"'  ?>,
+                    "value": "<?php echo $kpr->perolehan ?>"
+                },
+                <?php }
+                    } ?>
+            ]
+        }
+
+    });
+    myChart.render();
+});
+
+
+// function get_canvas() {
+//     html2canvas(document.getElementById("<?php echo $get->nama_alias ?>"), {
+//         allowTaint: true,
+//         useCORS: true
+//     }).then(function(canvas) {
+//         var anchorTag = document.createElement("a");
+//         document.body.appendChild(anchorTag);
+
+//         var dataURL = canvas.toDataURL();
+//         $.ajax({
+//             type: "POST",
+//             url: "<?php echo base_url() . $ci->session->userdata('username') . '/' . $ci->uri->segment(2) . '/rekap-responden/convert/' . $get->id ?>",
+//             data: {
+//                 imgBase64: dataURL
+//             },
+//             beforeSend: function() {},
+//             complete: function() {}
+//         }).done(function(o) {
+//             toastr["success"]('Data berhasil disimpan');
+//         });
+//     });
+// };
+// setTimeout(get_canvas, 2500);
+</script>
+@endforeach
+
+
+@endsection
